@@ -167,142 +167,145 @@ class ChatScreen(tk.Canvas):
         self.window = 'ChatScreen'
 
         self.first_frame = first_frame
-        self.first_frame.pack_forget()
-
+        self.first_frame.pack_forget() # Ẩn First Frame
+        
         self.parent = parent
-        self.parent.bind('<Return>', lambda e: self.sent_message_format(e))
+        self.parent.bind('<Return>', lambda e: self.sent_message_format(e)) # Gán hàm xử lý sự kiện cho cửa sổ FirstScreen
 
         self.all_user_image = {}
 
         self.user_id = user_id
 
-
         self.clients_connected = clients_connected
 
         # self.parent.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(self.first_frame))
-    #     self.parent.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.parent.protocol("WM_DELETE_WINDOW", self.on_closing) # Gán hành vi cho FirstScreen khi thực hiện tắt cửa sổ
 
-    #     self.client_socket = client_socket
-    #     screen_width, screen_height = self.winfo_screenwidth(), self.winfo_screenheight()
+        self.client_socket = client_socket
+        screen_width, screen_height = self.winfo_screenwidth(), self.winfo_screenheight()
 
-    #     x_co = int((screen_width / 2) - (680 / 2))
-    #     y_co = int((screen_height / 2) - (750 / 2)) - 80
-    #     self.parent.geometry(f"680x750+{x_co}+{y_co}")
+        x_co = int((screen_width / 2) - (680 / 2))
+        y_co = int((screen_height / 2) - (750 / 2)) - 80
+        self.parent.geometry(f"680x750+{x_co}+{y_co}")
 
-    #     user_image = Image.open(self.parent.image_path)
-    #     user_image = user_image.resize((40, 40), Image.ANTIALIAS)
-    #     self.user_image = ImageTk.PhotoImage(user_image)
+        user_image = Image.open(self.parent.image_path)
+        user_image = user_image.resize((40, 40), Image.LANCZOS)
+        self.user_image = ImageTk.PhotoImage(user_image)
 
-    #     # global background
-    #     # background = Image.open("images/chat_bg_ca.jpg")
-    #     # background = background.resize((1600, 1500), Image.ANTIALIAS)
-    #     # background = ImageTk.PhotoImage(background)
+        # global background
+        # background = Image.open("images/chat_bg_ca.jpg")
+        # background = background.resize((1600, 1500), Image.LANCZOS)
+        # background = ImageTk.PhotoImage(background)
 
-    #     global group_photo
-    #     group_photo = Image.open('images/group_ca.png')
-    #     group_photo = group_photo.resize((60, 60), Image.ANTIALIAS)
-    #     group_photo = ImageTk.PhotoImage(group_photo)
+        global group_photo
+        group_photo = Image.open(current_dir + '\\images\\group_ca.png')
+        group_photo = group_photo.resize((60, 60), Image.LANCZOS)
+        group_photo = ImageTk.PhotoImage(group_photo)
 
-    #     self.y = 140
-    #     self.clients_online_labels = {}
+        self.y = 140
+        self.clients_online_labels = {}
 
     #     # self.create_image(0, 0, image=background)
 
-    #     self.create_text(545, 120, text="Online", font="lucida 12 bold", fill="#40C961")
+        self.create_text(545, 120, text="Online", font="lucida 12 bold", fill="#40C961")
 
-    #     tk.Label(self, text="   ", font="lucida 15 bold", bg="#b5b3b3").place(x=4, y=29)
+        tk.Label(self, text="   ", font="lucida 15 bold", bg="#b5b3b3").place(x=4, y=29)
 
-    #     tk.Label(self, text="Group Chat", font="lucida 15 bold", padx=20, fg="green",
-    #              bg="#b5b3b3", anchor="w", justify="left").place(x=88, y=29, relwidth=1)
+        tk.Label(self, text="Group Chat", font="lucida 15 bold", padx=20, fg="green",
+                 bg="#b5b3b3", anchor="w").place(x=88, y=29, relwidth=1)
 
-    #     self.create_image(60, 40, image=group_photo)
+        self.create_image(60, 40, image=group_photo)
 
-    #     container = tk.Frame(self)
-    #     # 595656
-    #     # d9d5d4
-    #     container.place(x=40, y=120, width=450, height=550)
-    #     self.canvas = tk.Canvas(container, bg="#595656")
-    #     self.scrollable_frame = tk.Frame(self.canvas, bg="#595656")
+        # Cửa sổ chat
+        container = tk.Frame(self)
+        container.place(x=40, y=120, width=450, height=550)
+        self.canvas = tk.Canvas(container, bg="#595656")
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#595656")
 
-    #     scrollable_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        scrollable_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
 
-    #     def configure_scroll_region(e):
-    #         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
+        # Cấu hình thuộc tính scrollregion của canvas để xác định vùng cuộn bên trong canvas
+        def configure_scroll_region(e):
+            # bbox(): xác định hình chữ nhật bao quanh 1 hoặc nhiều đối tượng trong widget
+            self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
-    #     def resize_frame(e):
-    #         self.canvas.itemconfig(scrollable_window, width=e.width)
+        # Thay đổi kích thước của scrollable_window để phù hợp với kích thước của canvas
+        def resize_frame(e):
+            self.canvas.itemconfig(scrollable_window, width=e.width)
 
-    #     self.scrollable_frame.bind("<Configure>", configure_scroll_region)
+        # Gán sự kiện khi thay kích thước hoặc vị trí của scrollable_frame thay đổi
+        self.scrollable_frame.bind("<Configure>", configure_scroll_region)
 
-    #     scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.canvas.yview)
-    #     self.canvas.configure(yscrollcommand=scrollbar.set)
-    #     self.yview_moveto(1.0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.canvas.yview) # Tạo thanh cuộn dọc
+        self.canvas.configure(yscrollcommand=scrollbar.set) # Cấu hình canvas sử dụng thanh cuộn dọc
+        self.yview_moveto(1.0) # Thiết lập vị trí hiện tại của thanh cuộn (1.0 là vị trí cuối cùng)
 
-    #     scrollbar.pack(side="right", fill="y")
+        scrollbar.pack(side="right", fill="y")
 
-    #     self.canvas.bind("<Configure>", resize_frame)
-    #     self.canvas.pack(fill="both", expand=True)
+        self.canvas.bind("<Configure>", resize_frame)
+        self.canvas.pack(fill="both", expand=True)
 
-    #     send_button = tk.Button(self, text="Send", fg="#83eaf7", font="lucida 11 bold", bg="#7d7d7d", padx=10,
-    #                             relief="solid", bd=2, command=self.sent_message_format)
-    #     send_button.place(x=400, y=680)
+        send_button = tk.Button(self, text="Send", fg="#83eaf7", font="lucida 11 bold", bg="#7d7d7d", padx=10,
+                                relief="solid", bd=2, command=self.sent_message_format)
+        send_button.place(x=400, y=680)
 
-    #     self.entry = tk.Text(self, font="lucida 10 bold", width=38, height=2,
-    #                          highlightcolor="blue", highlightthickness=1)
-    #     self.entry.place(x=40, y=681)
+        self.entry = tk.Text(self, font="lucida 10 bold", width=38, height=2,
+                             highlightcolor="blue", highlightthickness=1)
+        self.entry.place(x=40, y=681)
 
-    #     self.entry.focus_set()
+        self.entry.focus_set()
 
-    #     # ---------------------------emoji code logic-----------------------------------
+        # ---------------------------emoji code logic-----------------------------------
 
-    #     emoji_data = [('emojis/u0001f44a.png', '\U0001F44A'), ('emojis/u0001f44c.png', '\U0001F44C'), ('emojis/u0001f44d.png', '\U0001F44D'),
-    #                   ('emojis/u0001f495.png', '\U0001F495'), ('emojis/u0001f496.png', '\U0001F496'), ('emojis/u0001f4a6.png', '\U0001F4A6'),
-    #                   ('emojis/u0001f4a9.png', '\U0001F4A9'), ('emojis/u0001f4af.png', '\U0001F4AF'), ('emojis/u0001f595.png', '\U0001F595'),
-    #                   ('emojis/u0001f600.png', '\U0001F600'), ('emojis/u0001f602.png', '\U0001F602'), ('emojis/u0001f603.png', '\U0001F603'),
-    #                   ('emojis/u0001f605.png', '\U0001F605'), ('emojis/u0001f606.png', '\U0001F606'), ('emojis/u0001f608.png', '\U0001F608'),
-    #                   ('emojis/u0001f60d.png', '\U0001F60D'), ('emojis/u0001f60e.png', '\U0001F60E'), ('emojis/u0001f60f.png', '\U0001F60F'),
-    #                   ('emojis/u0001f610.png', '\U0001F610'), ('emojis/u0001f618.png', '\U0001F618'), ('emojis/u0001f61b.png', '\U0001F61B'),
-    #                   ('emojis/u0001f61d.png', '\U0001F61D'), ('emojis/u0001f621.png', '\U0001F621'), ('emojis/u0001f624.png', '\U0001F621'),
-    #                   ('emojis/u0001f631.png', '\U0001F631'), ('emojis/u0001f632.png', '\U0001F632'), ('emojis/u0001f634.png', '\U0001F634'),
-    #                   ('emojis/u0001f637.png', '\U0001F637'), ('emojis/u0001f642.png', '\U0001F642'), ('emojis/u0001f64f.png', '\U0001F64F'),
-    #                   ('emojis/u0001f920.png', '\U0001F920'), ('emojis/u0001f923.png', '\U0001F923'), ('emojis/u0001f928.png', '\U0001F928')]
+        emoji_data = [('emojis/u0001f44a.png', '\U0001F44A'), ('emojis/u0001f44c.png', '\U0001F44C'), ('emojis/u0001f44d.png', '\U0001F44D'),
+                      ('emojis/u0001f495.png', '\U0001F495'), ('emojis/u0001f496.png', '\U0001F496'), ('emojis/u0001f4a6.png', '\U0001F4A6'),
+                      ('emojis/u0001f4a9.png', '\U0001F4A9'), ('emojis/u0001f4af.png', '\U0001F4AF'), ('emojis/u0001f595.png', '\U0001F595'),
+                      ('emojis/u0001f600.png', '\U0001F600'), ('emojis/u0001f602.png', '\U0001F602'), ('emojis/u0001f603.png', '\U0001F603'),
+                      ('emojis/u0001f605.png', '\U0001F605'), ('emojis/u0001f606.png', '\U0001F606'), ('emojis/u0001f608.png', '\U0001F608'),
+                      ('emojis/u0001f60d.png', '\U0001F60D'), ('emojis/u0001f60e.png', '\U0001F60E'), ('emojis/u0001f60f.png', '\U0001F60F'),
+                      ('emojis/u0001f610.png', '\U0001F610'), ('emojis/u0001f618.png', '\U0001F618'), ('emojis/u0001f61b.png', '\U0001F61B'),
+                      ('emojis/u0001f61d.png', '\U0001F61D'), ('emojis/u0001f621.png', '\U0001F621'), ('emojis/u0001f624.png', '\U0001F621'),
+                      ('emojis/u0001f631.png', '\U0001F631'), ('emojis/u0001f632.png', '\U0001F632'), ('emojis/u0001f634.png', '\U0001F634'),
+                      ('emojis/u0001f637.png', '\U0001F637'), ('emojis/u0001f642.png', '\U0001F642'), ('emojis/u0001f64f.png', '\U0001F64F'),
+                      ('emojis/u0001f920.png', '\U0001F920'), ('emojis/u0001f923.png', '\U0001F923'), ('emojis/u0001f928.png', '\U0001F928')]
 
-    #     emoji_x_pos = 490
-    #     emoji_y_pos = 520
-    #     for Emoji in emoji_data:
-    #         global emojis
-    #         emojis = Image.open(Emoji[0])
-    #         emojis = emojis.resize((20, 20), Image.ANTIALIAS)
-    #         emojis = ImageTk.PhotoImage(emojis)
+        emoji_x_pos = 490
+        emoji_y_pos = 520
+        for Emoji in emoji_data:
+            global emojis
+            emojis = Image.open(Emoji[0])
+            emojis = emojis.resize((20, 20), Image.LANCZOS)
+            emojis = ImageTk.PhotoImage(emojis)
 
-    #         emoji_unicode = Emoji[1]
-    #         emoji_label = tk.Label(self, image=emojis, text=emoji_unicode, bg="#194548", cursor="hand2")
-    #         emoji_label.image = emojis
-    #         emoji_label.place(x=emoji_x_pos, y=emoji_y_pos)
-    #         emoji_label.bind('<Button-1>', lambda x: self.insert_emoji(x))
+            emoji_unicode = Emoji[1]
+            emoji_label = tk.Label(self, image=emojis, text=emoji_unicode, bg="#194548", cursor="hand2")
+            emoji_label.image = emojis
+            emoji_label.place(x=emoji_x_pos, y=emoji_y_pos)
+            emoji_label.bind('<Button-1>', lambda x: self.insert_emoji(x)) # Gán sự kiện khi nhấn chuột trái
 
-    #         emoji_x_pos += 25
-    #         cur_index = emoji_data.index(Emoji)
-    #         if (cur_index + 1) % 6 == 0:
-    #             emoji_y_pos += 25
-    #             emoji_x_pos = 490
+            emoji_x_pos += 25
+            cur_index = emoji_data.index(Emoji)
+            if (cur_index + 1) % 6 == 0:
+                emoji_y_pos += 25
+                emoji_x_pos = 490
 
-    #     # -------------------end of emoji code logic-------------------------------------
+        # -------------------end of emoji code logic-------------------------------------
 
-    #     m_frame = tk.Frame(self.scrollable_frame, bg="#d9d5d4")
+        m_frame = tk.Frame(self.scrollable_frame, bg="#d9d5d4")
 
-    #     t_label = tk.Label(m_frame, bg="#d9d5d4", text=datetime.now().strftime('%H:%M'), font="lucida 9 bold")
-    #     t_label.pack()
+        #Thêm thời gian tham gia của user
+        t_label = tk.Label(m_frame, bg="#d9d5d4", text=datetime.now().strftime('%H:%M'), font="lucida 9 bold")
+        t_label.pack()
 
-    #     m_label = tk.Label(m_frame, wraplength=250, text=f"Happy Chatting {self.parent.user}",
-    #                        font="lucida 10 bold", bg="orange")
-    #     m_label.pack(fill="x")
+        m_label = tk.Label(m_frame, wraplength=250, text=f"Happy Chatting {self.parent.user}",
+                           font="lucida 10 bold", bg="orange")
+        m_label.pack(fill="x")
 
-    #     m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+        m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
-    #     self.pack(fill="both", expand=True)
+        self.pack(fill="both", expand=True)
 
-    #     self.clients_online([])
+        # self.clients_online([])
 
     #     t = threading.Thread(target=self.receive_data)
     #     t.setDaemon(True)
@@ -341,16 +344,16 @@ class ChatScreen(tk.Canvas):
     #             self.first_screen()
     #             break
 
-    # def on_closing(self):
-    #     if self.window == 'ChatScreen':
-    #         res = messagebox.askyesno(title='Warning !',message="Do you really want to disconnect ?")
-    #         if res:
-    #             import os
-    #             os.remove(self.all_user_image[self.user_id])
-    #             self.client_socket.close()
-    #             self.first_screen()
-    #     else:
-    #         self.parent.destroy()
+    def on_closing(self):
+        if self.window == 'ChatScreen': # Khi đã kết nối client vào server
+            res = messagebox.askyesno(title='Warning !',message="Do you really want to disconnect ?")
+            if res: # Nếu chọn yes
+                import os
+                # os.remove(self.all_user_image[self.user_id])
+                self.client_socket.close()
+                self.first_screen()
+        else:
+            self.parent.destroy()
 
     # def received_message_format(self, data):
 
@@ -365,7 +368,7 @@ class ChatScreen(tk.Canvas):
     #         f.write(sender_image)
 
     #     im = Image.open(f"{from_}.{sender_image_extension}")
-    #     im = im.resize((40, 40), Image.ANTIALIAS)
+    #     im = im.resize((40, 40), Image.LANCZOS)
     #     im = ImageTk.PhotoImage(im)
 
     #     m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
@@ -389,9 +392,9 @@ class ChatScreen(tk.Canvas):
     #     self.canvas.update_idletasks()
     #     self.canvas.yview_moveto(1.0)
 
-    # def sent_message_format(self, event=None):
+    def sent_message_format(self, event=None):
 
-    #     message = self.entry.get('1.0', 'end-1c')
+        message = self.entry.get('1.0', 'end-1c')
 
     #     if message:
     #         if event:
@@ -472,7 +475,7 @@ class ChatScreen(tk.Canvas):
     #             self.all_user_image[user_id] = f"{user_id}.{extension}"
 
     #             user = Image.open(f"{user_id}.{extension}")
-    #             user = user.resize((45, 45), Image.ANTIALIAS)
+    #             user = user.resize((45, 45), Image.LANCZOS)
     #             user = ImageTk.PhotoImage(user)
 
     #             b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=15)
@@ -495,7 +498,7 @@ class ChatScreen(tk.Canvas):
     #         self.all_user_image[user_id] = f"{user_id}.{extension}"
 
     #         user = Image.open(f"{user_id}.{extension}")
-    #         user = user.resize((45, 45), Image.ANTIALIAS)
+    #         user = user.resize((45, 45), Image.LANCZOS)
     #         user = ImageTk.PhotoImage(user)
 
     #         b = tk.Label(self, image=user, text=name, compound="left", fg="white", bg="#2b2b2b",
@@ -523,14 +526,14 @@ class ChatScreen(tk.Canvas):
     #             self.clients_online_labels[user_id] = (b, y_co)
     #             self.y -= 60
 
-    # def insert_emoji(self, x):
-    #     self.entry.insert("end-1c", x.widget['text'])
+    def insert_emoji(self, x):
+        self.entry.insert("end-1c", x.widget['text'])
 
-    # def first_screen(self):
-    #     self.destroy()
-    #     self.parent.geometry(f"550x400+{self.parent.x_co}+{self.parent.y_co}")
-    #     self.parent.first_frame.pack(fill="both", expand=True)
-    #     self.window = None
+    def first_screen(self):
+        self.destroy()
+        self.parent.geometry(f"550x400+{self.parent.x_co}+{self.parent.y_co}")
+        self.parent.first_frame.pack(fill="both", expand=True)
+        self.window = None
 
 
 FirstScreen()
