@@ -519,7 +519,6 @@ class ChatScreen(tk.Canvas):
 
             elif user_id > client_id:
                 y_co -= 60
-                b = self.cl
                 b.place(x=510, y=y_co)
                 self.clients_online_labels[user_id] = (b, y_co)
                 self.y -= 60
