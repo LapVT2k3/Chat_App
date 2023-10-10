@@ -308,7 +308,7 @@ class ChatScreen(tk.Canvas):
         self.clients_online([])
 
         t = threading.Thread(target=self.receive_data)
-        # t.daemon = True
+        t.daemon = True
         t.start()
 
     def receive_data(self):
@@ -319,7 +319,6 @@ class ChatScreen(tk.Canvas):
                 if data_type == 'notification': # Thông báo có user khác kết nối hoặc ngắt kết nối đến server
                     data_size = self.client_socket.recv(1024)
                     data_size_int = struct.unpack('i', data_size)[0]
-
                     b = b''
                     while True:
                         data_bytes = self.client_socket.recv(1024)
@@ -405,9 +404,8 @@ class ChatScreen(tk.Canvas):
 
             data = {'from': from_, 'message': message}
             data_bytes = pickle.dumps(data)
-
             self.client_socket.send(data_bytes)
-
+            
             m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
 
             m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
@@ -458,6 +456,7 @@ class ChatScreen(tk.Canvas):
 
         m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
+        self.canvas.update_idletasks()
         self.canvas.yview_moveto(1.0)
 
     def clients_online(self, new_added):
@@ -514,14 +513,14 @@ class ChatScreen(tk.Canvas):
             if user_id == client_id:
                 b.destroy()
                 del self.clients_online_labels[client_id]
+                self.y -= 60
                 # import os
                 # os.remove(self.all_user_image[user_id])
 
             elif user_id > client_id:
                 y_co -= 60
-                b.place(x=510, y=y_co)
+                b.place(x=500, y=y_co)
                 self.clients_online_labels[user_id] = (b, y_co)
-                self.y -= 60
 
     def insert_emoji(self, x):
         self.entry.insert("end-1c", x.widget['text'])
