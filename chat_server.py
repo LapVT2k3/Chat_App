@@ -63,6 +63,7 @@ def connection_requests():
         client_socket.send(clients_data_length)
         client_socket.send(clients_data_bytes)
 
+        # Gửi thông báo tới các client khác khi có 1 client kết nối tới server
         if client_socket.recv(1024).decode() == 'image_received':
             client_socket.send(struct.pack('i', count))
 
@@ -125,6 +126,5 @@ def receive_data(client_socket):
             if client != client_socket:
                 client.send('message'.encode())
                 client.send(data_bytes)
-
 
 connection_requests()

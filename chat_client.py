@@ -172,7 +172,7 @@ class ChatScreen(tk.Canvas):
         self.parent = parent
         self.parent.bind('<Return>', lambda e: self.sent_message_format(e)) # Gán hàm xử lý sự kiện cho cửa sổ FirstScreen
 
-        self.all_user_image = {}
+        # self.all_user_image = {}
 
         self.user_id = user_id
 
@@ -202,10 +202,10 @@ class ChatScreen(tk.Canvas):
         group_photo = group_photo.resize((60, 60), Image.LANCZOS)
         group_photo = ImageTk.PhotoImage(group_photo)
 
-        self.y = 140
+        self.y = 140 # Vị trí hiển thị client online đầu tiên
         self.clients_online_labels = {}
 
-    #     # self.create_image(0, 0, image=background)
+        # self.create_image(0, 0, image=background)
 
         self.create_text(545, 120, text="Online", font="lucida 12 bold", fill="#40C961")
 
@@ -256,7 +256,7 @@ class ChatScreen(tk.Canvas):
         self.entry.focus_set()
 
         # ---------------------------emoji code logic-----------------------------------
-
+                
         emoji_data = [('emojis/u0001f44a.png', '\U0001F44A'), ('emojis/u0001f44c.png', '\U0001F44C'), ('emojis/u0001f44d.png', '\U0001F44D'),
                       ('emojis/u0001f495.png', '\U0001F495'), ('emojis/u0001f496.png', '\U0001F496'), ('emojis/u0001f4a6.png', '\U0001F4A6'),
                       ('emojis/u0001f4a9.png', '\U0001F4A9'), ('emojis/u0001f4af.png', '\U0001F4AF'), ('emojis/u0001f595.png', '\U0001F595'),
@@ -305,226 +305,224 @@ class ChatScreen(tk.Canvas):
 
         self.pack(fill="both", expand=True)
 
-        # self.clients_online([])
+        self.clients_online([])
 
-    #     t = threading.Thread(target=self.receive_data)
-    #     t.setDaemon(True)
-    #     t.start()
+        t = threading.Thread(target=self.receive_data)
+        # t.daemon = True
+        t.start()
 
-    # def receive_data(self):
-    #     while True:
-    #         try:
-    #             data_type = self.client_socket.recv(1024).decode()
+    def receive_data(self):
+        while True:
+            try:
+                data_type = self.client_socket.recv(1024).decode()
 
-    #             if data_type == 'notification':
-    #                 data_size = self.client_socket.recv(2048)
-    #                 data_size_int = struct.unpack('i', data_size)[0]
+                if data_type == 'notification': # Thông báo có user khác kết nối hoặc ngắt kết nối đến server
+                    data_size = self.client_socket.recv(1024)
+                    data_size_int = struct.unpack('i', data_size)[0]
 
-    #                 b = b''
-    #                 while True:
-    #                     data_bytes = self.client_socket.recv(1024)
-    #                     b += data_bytes
-    #                     if len(b) == data_size_int:
-    #                         break
-    #                 data = pickle.loads(b)
-    #                 self.notification_format(data)
+                    b = b''
+                    while True:
+                        data_bytes = self.client_socket.recv(1024)
+                        b += data_bytes
+                        if len(b) == data_size_int:
+                            break
+                    data = pickle.loads(b)
+                    self.notification_format(data)
 
-    #             else:
-    #                 data_bytes = self.client_socket.recv(1024)
-    #                 data = pickle.loads(data_bytes)
-    #                 self.received_message_format(data)
+                else: # Nếu data_type = 'message'
+                    data_bytes = self.client_socket.recv(1024) # Nhận tin nhắn từ client khác
+                    data = pickle.loads(data_bytes)
+                    self.received_message_format(data) # Xử lý tin nhắn
 
-    #         except ConnectionAbortedError:
-    #             print("you disconnected ...")
-    #             self.client_socket.close()
-    #             break
-    #         except ConnectionResetError:
-    #             messagebox.showinfo(title='No Connection !', message="Server offline..try connecting again later")
-    #             self.client_socket.close()
-    #             self.first_screen()
-    #             break
+            except ConnectionAbortedError:
+                print("you disconnected ...")
+                self.client_socket.close()
+                break
+            except ConnectionResetError:
+                messagebox.showinfo(title='No Connection !', message="Server offline..try connecting again later")
+                self.client_socket.close()
+                self.first_screen()
+                break
 
     def on_closing(self):
         if self.window == 'ChatScreen': # Khi đã kết nối client vào server
             res = messagebox.askyesno(title='Warning !',message="Do you really want to disconnect ?")
             if res: # Nếu chọn yes
-                import os
+                # import os
                 # os.remove(self.all_user_image[self.user_id])
                 self.client_socket.close()
                 self.first_screen()
         else:
             self.parent.destroy()
 
-    # def received_message_format(self, data):
+    def received_message_format(self, data):
 
-    #     message = data['message']
-    #     from_ = data['from']
+        message = data['message']
+        from_ = data['from']
 
-    #     sender_image = self.clients_connected[from_][1]
-    #     sender_image_extension = self.clients_connected[from_][2]
+        sender_image = self.clients_connected[from_][1]
+        sender_image_extension = self.clients_connected[from_][2]
 
-    #     # if not os.path.exists(f"{from_}.{sender_image_extension}"):
-    #     with open(f"{from_}.{sender_image_extension}", 'wb') as f:
-    #         f.write(sender_image)
+        # if not os.path.exists(f"{from_}.{sender_image_extension}"):
+        with open(f"{from_}.{sender_image_extension}", 'wb') as f:
+            f.write(sender_image)
 
-    #     im = Image.open(f"{from_}.{sender_image_extension}")
-    #     im = im.resize((40, 40), Image.LANCZOS)
-    #     im = ImageTk.PhotoImage(im)
+        im = Image.open(f"{from_}.{sender_image_extension}")
+        im = im.resize((40, 40), Image.LANCZOS)
+        im = ImageTk.PhotoImage(im)
 
-    #     m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+        m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
 
-    #     m_frame.columnconfigure(1, weight=1)
+        m_frame.columnconfigure(1, weight=1)
 
-    #     t_label = tk.Label(m_frame, bg="#595656",fg="white", text=datetime.now().strftime('%H:%M'), font="lucida 7 bold",
-    #                        justify="left", anchor="w")
-    #     t_label.grid(row=0, column=1, padx=2, sticky="w")
+        t_label = tk.Label(m_frame, bg="#595656",fg="white", text=datetime.now().strftime('%H:%M'), font="lucida 7 bold",
+                           justify="left", anchor="w")
+        t_label.grid(row=0, column=1, padx=2, sticky="w")
 
-    #     m_label = tk.Label(m_frame, wraplength=250,fg="black", bg="#c5c7c9", text=message, font="lucida 9 bold", justify="left",
-    #                        anchor="w")
-    #     m_label.grid(row=1, column=1, padx=2, pady=2, sticky="w")
+        m_label = tk.Label(m_frame, wraplength=250,fg="black", bg="#c5c7c9", text=message, font="lucida 9 bold", justify="left",
+                           anchor="w")
+        m_label.grid(row=1, column=1, padx=2, pady=2, sticky="w")
 
-    #     i_label = tk.Label(m_frame, bg="#595656", image=im)
-    #     i_label.image = im
-    #     i_label.grid(row=0, column=0, rowspan=2)
+        i_label = tk.Label(m_frame, bg="#595656", image=im)
+        i_label.image = im
+        i_label.grid(row=0, column=0, rowspan=2)
 
-    #     m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+        m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
-    #     self.canvas.update_idletasks()
-    #     self.canvas.yview_moveto(1.0)
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(1.0)
 
     def sent_message_format(self, event=None):
 
-        message = self.entry.get('1.0', 'end-1c')
+        message = self.entry.get('1.0', 'end-1c') # Lấy toàn bộ nội dung text
 
-    #     if message:
-    #         if event:
-    #             message = message.strip()
-    #         self.entry.delete("1.0", "end-1c")
+        if message:
+            if event: # Hơi khó hiểu
+                message = message.strip()
+            self.entry.delete("1.0", "end-1c")
 
-    #         from_ = self.user_id
+            from_ = self.user_id
 
-    #         data = {'from': from_, 'message': message}
-    #         data_bytes = pickle.dumps(data)
+            data = {'from': from_, 'message': message}
+            data_bytes = pickle.dumps(data)
 
-    #         self.client_socket.send(data_bytes)
+            self.client_socket.send(data_bytes)
 
-    #         m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+            m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
 
-    #         m_frame.columnconfigure(0, weight=1)
+            m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
 
-    #         t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
-    #                            font="lucida 7 bold", justify="right", anchor="e")
-    #         t_label.grid(row=0, column=0, padx=2, sticky="e")
+            t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
+                               font="lucida 7 bold", justify="right", anchor="e")
+            t_label.grid(row=0, column=0, padx=2, sticky="e")
 
-    #         m_label = tk.Label(m_frame, wraplength=250, text=message, fg="black", bg="#40C961",
-    #                            font="lucida 9 bold", justify="left",
-    #                            anchor="e")
-    #         m_label.grid(row=1, column=0, padx=2, pady=2, sticky="e")
+            m_label = tk.Label(m_frame, wraplength=250, text=message, fg="black", bg="#40C961",
+                               font="lucida 9 bold", justify="left",
+                               anchor="e")
+            m_label.grid(row=1, column=0, padx=2, pady=2, sticky="e")
 
-    #         i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
-    #         i_label.image = self.user_image
-    #         i_label.grid(row=0, column=1, rowspan=2, sticky="e")
+            i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
+            i_label.image = self.user_image
+            i_label.grid(row=0, column=1, rowspan=2, sticky="e")
 
-    #         m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+            m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
-    #         self.canvas.update_idletasks()
-    #         self.canvas.yview_moveto(1.0)
+            self.canvas.update_idletasks() # Cập nhật giao diện chat khi tin nhắn gửi lên
+            self.canvas.yview_moveto(1.0)
 
-    # def notification_format(self, data):
-    #     if data['n_type'] == 'joined':
+    def notification_format(self, data):
+        if data['n_type'] == 'joined':
 
-    #         name = data['name']
-    #         image = data['image_bytes']
-    #         extension = data['extension']
-    #         message = data['message']
-    #         client_id = data['id']
-    #         self.clients_connected[client_id] = (name, image, extension)
-    #         self.clients_online([client_id, name, image, extension])
-    #         # print(self.clients_connected)
+            name = data['name']
+            image = data['image_bytes']
+            extension = data['extension']
+            message = data['message']
+            client_id = data['id']
+            self.clients_connected[client_id] = (name, image, extension)
+            self.clients_online([client_id, name, image, extension])
 
-    #     elif data['n_type'] == 'left':
-    #         client_id = data['id']
-    #         message = data['message']
-    #         self.remove_labels(client_id)
-    #         del self.clients_connected[client_id]
+        elif data['n_type'] == 'left':
+            client_id = data['id']
+            message = data['message']
+            self.remove_labels(client_id)
+            del self.clients_connected[client_id]
 
-    #     m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+        m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
 
-    #     t_label = tk.Label(m_frame, fg="white", bg="#595656", text=datetime.now().strftime('%H:%M'),
-    #                        font="lucida 9 bold")
-    #     t_label.pack()
+        t_label = tk.Label(m_frame, fg="white", bg="#595656", text=datetime.now().strftime('%H:%M'),
+                           font="lucida 9 bold")
+        t_label.pack()
 
-    #     m_label = tk.Label(m_frame, wraplength=250, text=message, font="lucida 10 bold", justify="left", bg="sky blue")
-    #     m_label.pack()
+        m_label = tk.Label(m_frame, wraplength=250, text=message, font="lucida 10 bold", justify="left", bg="sky blue")
+        m_label.pack()
 
-    #     m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+        m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
-    #     self.canvas.yview_moveto(1.0)
+        self.canvas.yview_moveto(1.0)
 
-    # def clients_online(self, new_added):
-    #     if not new_added:
-    #         pass
-    #         for user_id in self.clients_connected:
-    #             name = self.clients_connected[user_id][0]
-    #             image_bytes = self.clients_connected[user_id][1]
-    #             extension = self.clients_connected[user_id][2]
+    def clients_online(self, new_added):
+        if not new_added:
+            for user_id in self.clients_connected:
+                name = self.clients_connected[user_id][0]
+                image_bytes = self.clients_connected[user_id][1]
+                extension = self.clients_connected[user_id][2]
 
-    #             with open(f"{user_id}.{extension}", 'wb') as f:
-    #                 f.write(image_bytes)
+                with open(f"{user_id}.{extension}", 'wb') as f:
+                    f.write(image_bytes)
 
-    #             self.all_user_image[user_id] = f"{user_id}.{extension}"
+                # self.all_user_image[user_id] = f"{user_id}.{extension}"
 
-    #             user = Image.open(f"{user_id}.{extension}")
-    #             user = user.resize((45, 45), Image.LANCZOS)
-    #             user = ImageTk.PhotoImage(user)
+                user = Image.open(f"{user_id}.{extension}")
+                user = user.resize((45, 45), Image.LANCZOS)
+                user = ImageTk.PhotoImage(user)
 
-    #             b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=15)
-    #             b.image = user
-    #             self.clients_online_labels[user_id] = (b, self.y)
+                b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=15)
+                b.image = user
+                self.clients_online_labels[user_id] = (b, self.y)
 
-    #             b.place(x=500, y=self.y)
-    #             self.y += 60
+                b.place(x=500, y=self.y)
+                self.y += 60
 
 
-    #     else:
-    #         user_id = new_added[0]
-    #         name = new_added[1]
-    #         image_bytes = new_added[2]
-    #         extension = new_added[3]
+        else:
+            user_id = new_added[0]
+            name = new_added[1]
+            image_bytes = new_added[2]
+            extension = new_added[3]
 
-    #         with open(f"{user_id}.{extension}", 'wb') as f:
-    #             f.write(image_bytes)
+            with open(f"{user_id}.{extension}", 'wb') as f:
+                f.write(image_bytes)
 
-    #         self.all_user_image[user_id] = f"{user_id}.{extension}"
+            # self.all_user_image[user_id] = f"{user_id}.{extension}"
 
-    #         user = Image.open(f"{user_id}.{extension}")
-    #         user = user.resize((45, 45), Image.LANCZOS)
-    #         user = ImageTk.PhotoImage(user)
+            user = Image.open(f"{user_id}.{extension}")
+            user = user.resize((45, 45), Image.LANCZOS)
+            user = ImageTk.PhotoImage(user)
 
-    #         b = tk.Label(self, image=user, text=name, compound="left", fg="white", bg="#2b2b2b",
-    #                      font="lucida 10 bold", padx=15)
-    #         b.image = user
-    #         self.clients_online_labels[user_id] = (b, self.y)
+            b = tk.Label(self, image=user, text=name, compound="left", fg="white", bg="#2b2b2b",
+                         font="lucida 10 bold", padx=15)
+            b.image = user
+            self.clients_online_labels[user_id] = (b, self.y)
 
-    #         b.place(x=500, y=self.y)
-    #         self.y += 60
+            b.place(x=500, y=self.y)
+            self.y += 60
 
-    # def remove_labels(self, client_id):
-    #     for user_id in self.clients_online_labels.copy():
-    #         b = self.clients_online_labels[user_id][0]
-    #         y_co = self.clients_online_labels[user_id][1]
-    #         if user_id == client_id:
-    #             print("yes")
-    #             b.destroy()
-    #             del self.clients_online_labels[client_id]
-    #             import os
-    #             # os.remove(self.all_user_image[user_id])
+    def remove_labels(self, client_id):
+        for user_id in self.clients_online_labels.copy():
+            b = self.clients_online_labels[user_id][0]
+            y_co = self.clients_online_labels[user_id][1]
+            if user_id == client_id:
+                b.destroy()
+                del self.clients_online_labels[client_id]
+                # import os
+                # os.remove(self.all_user_image[user_id])
 
-    #         elif user_id > client_id:
-    #             y_co -= 60
-    #             b.place(x=510, y=y_co)
-    #             self.clients_online_labels[user_id] = (b, y_co)
-    #             self.y -= 60
+            elif user_id > client_id:
+                y_co -= 60
+                b = self.cl
+                b.place(x=510, y=y_co)
+                self.clients_online_labels[user_id] = (b, y_co)
+                self.y -= 60
 
     def insert_emoji(self, x):
         self.entry.insert("end-1c", x.widget['text'])
