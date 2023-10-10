@@ -12,11 +12,11 @@ import struct
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# try:
-#     from ctypes import windll
-#     windll.shcore.SetProcessDpiAwareness(1)
-# except:
-#     pass
+try:
+    from ctypes import windll
+    windll.shcore.SetProcessDpiAwareness(1)
+except:
+    pass
 
 
 class FirstScreen(tk.Tk):
