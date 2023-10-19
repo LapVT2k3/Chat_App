@@ -22,7 +22,7 @@ except:
 class FirstScreen(tk.Tk):
     def __init__(self):
         super().__init__()
-
+        
         screen_width, screen_height = self.winfo_screenwidth(), self.winfo_screenheight()
         
         self.x_co = int((screen_width / 2) - (550 / 2))

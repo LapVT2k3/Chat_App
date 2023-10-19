@@ -47,7 +47,7 @@ def connection_requests():
         client_socket.sendall('received'.encode())
         image_extension = client_socket.recv(1024).decode()
 
-        # Lưu dữ liệu ảnh dạng byte khi kích thước ảnh vượt quá 1 byte
+        # Lưu dữ liệu ảnh dạng byte khi kích thước ảnh vượt quá 1 mebyte
         b = b''
         while True:
             image_bytes = client_socket.recv(1024)
