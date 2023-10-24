@@ -197,7 +197,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.first_frame.pack_forget() # Ẩn First Frame
         
         self.parent = parent
-        self.parent.bind('<Return>', self.sent_message_format) # Gán hàm xử lý sự kiện khi nhấn phím enter
+        self.parent.bind('<Return>', lambda e: self.sent_message_format(e)) # Gán hàm xử lý sự kiện khi nhấn phím enter
 
         self.user_id = user_id
 
@@ -219,6 +219,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.user_image = ImageTk.PhotoImage(user_image)
 
         # Tạo ảnh nhóm
+        global group_photo
         group_photo = Image.open(current_dir + '\\images\\group_ca.png')
         group_photo = group_photo.resize((60, 60), Image.LANCZOS)
         group_photo = ImageTk.PhotoImage(group_photo)
@@ -420,11 +421,13 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.canvas.yview_moveto(1.0)
 
     # Xử lý gửi tin nhắn
-    def sent_message_format(self):
+    def sent_message_format(self, event = None):
 
         message = self.entry.get('1.0', 'end-1c') # Lấy toàn bộ nội dung text
 
         if message:
+            if event:
+                message = message.strip()
             self.entry.delete("1.0", "end-1c") # Xóa text
 
             # Gửi thông tin tin nhắn tới Server
