@@ -45,44 +45,26 @@ class FirstScreen(tk.Tk): # Kế thừa lớp tk.Tk để tạo giao diện
         self.first_frame.pack(fill="both", expand=True)
 
         # Icon App
-<<<<<<< HEAD
         app_icon = Image.open(current_dir + '\\images\\icon_chat.png')
-=======
-        app_icon = Image.open(current_dir + '\\images\\chat_ca.png')
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         app_icon = ImageTk.PhotoImage(app_icon)
         self.iconphoto(False, app_icon)
 
         # Background
-<<<<<<< HEAD
         background = Image.open(current_dir + '\\images\\bg_reg.png')
-=======
-        background = Image.open(current_dir + '\\images\\login_bg_ca.jpg')
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         background = background.resize((550, 400), Image.LANCZOS) # Thay đổi kích cỡ và làm mịn ảnh
         background = ImageTk.PhotoImage(background)
         tk.Label(self.first_frame, image=background).place(x=0, y=0)
 
         # Icon của nút Upload ảnh
-<<<<<<< HEAD
         upload_image = Image.open(current_dir + '\\images\\icon_upload.jpg')
-=======
-        upload_image = Image.open(current_dir + '\\images\\upload_ca.png')
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         upload_image = upload_image.resize((25, 25), Image.LANCZOS)
         upload_image = ImageTk.PhotoImage(upload_image)
 
         self.user_image = current_dir + '\\images\\user.png' 
 
-<<<<<<< HEAD
         # Label "Login"
         head = tk.Label(self.first_frame, text="Login", font="lucida 17 bold", bg="#00FFFF")
         head.place(x=0, y=0, width=550)
-=======
-        # Label "Sign Up"
-        head = tk.Label(self.first_frame, text="Sign Up", font="lucida 17 bold", bg="grey")
-        head.place(x=200, y=24, width=150)
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
         # Label chứa ảnh
         self.profile_label = tk.Label(self.first_frame, bg="grey")
@@ -94,20 +76,11 @@ class FirstScreen(tk.Tk): # Kế thừa lớp tk.Tk để tạo giao diện
         upload_button.place(x=200, y=220)
 
         # Label "Username"
-<<<<<<< HEAD
         self.username = tk.Label(self.first_frame, text="Username", font="lucida 12 bold", bg = "SystemWindow")
         self.username.place(x=90, y=280)
 
         # Ô nhập tên
-        self.username_entry = tk.Entry(self.first_frame,  font="lucida 12 bold", width=12,
-=======
-        username = tk.Label(self.first_frame, text="Username", font="lucida 12 bold", bg="grey")
-        username.place(x=80, y=150)
-
-        # Ô nhập tên
-        self.username_entry = tk.Entry(self.first_frame,  font="lucida 12 bold", width=10,
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
-                                       highlightcolor="blue", highlightthickness=1)
+        self.username_entry = tk.Entry(self.first_frame,  font="lucida 12 bold", width=12, highlightcolor="blue", highlightthickness=1)
         self.username_entry.place(x=210, y=280)
         self.username_entry.focus_set()
 
@@ -215,20 +188,12 @@ class FirstScreen(tk.Tk): # Kế thừa lớp tk.Tk để tạo giao diện
 # Màn hình chat
 class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao diện và các đối tượng đồ họa khác
     def __init__(self, parent, first_frame, client_socket, clients_connected, user_id):
-
-<<<<<<< HEAD
         super().__init__(parent)
-=======
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         self.window = 'ChatScreen' # Đặt tên để xác định cửa sổ
 
         self.first_frame = first_frame
         self.first_frame.pack_forget() # Ẩn First Frame
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         self.parent = parent
         self.parent.bind('<Return>', lambda e: self.sent_message_format(e)) # Gán hàm xử lý sự kiện khi nhấn phím enter
 
@@ -246,15 +211,12 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         y_co = int((screen_height / 2) - (750 / 2)) - 80
         self.parent.geometry(f"680x750+{x_co}+{y_co}")
 
-<<<<<<< HEAD
         global background
         background = Image.open(current_dir + '\\images\\bg_chat.jpg')
         background = background.resize((1600, 1900), Image.LANCZOS) # Thay đổi kích cỡ và làm mịn ảnh
         background = ImageTk.PhotoImage(background)
         self.create_image(0, 0, image = background)
 
-=======
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         # Lấy ảnh người dùng
         user_image = Image.open(self.parent.image_path)
         user_image = user_image.resize((40, 40), Image.LANCZOS)
@@ -271,7 +233,6 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.clients_online_labels = {} # Danh sách Client
 
         # Tạo giao diện 1 số label đơn giản
-<<<<<<< HEAD
         self.create_text(580, 120, text="Online", font="lucida 12 bold", fill="red")
 
         # tk.Label(self, text="   ", font="lucida 15 bold").place(x=4, y=29)
@@ -282,18 +243,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         # Cửa sổ chat
         container = tk.Frame(self)
         container.place(x=30, y=90, width=470, height=590)
-=======
-        self.create_text(545, 120, text="Online", font="lucida 12 bold", fill="#40C961")
 
-        tk.Label(self, text="   ", font="lucida 15 bold", bg="#b5b3b3").place(x=4, y=29)
-
-        tk.Label(self, text="Group Chat", font="lucida 15 bold", padx=20, fg="green",
-                 bg="#b5b3b3", anchor="w").place(x=88, y=29, relwidth=1)
-
-        # Cửa sổ chat
-        container = tk.Frame(self)
-        container.place(x=40, y=120, width=450, height=550)
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         self.canvas = tk.Canvas(container, bg="#595656")
         self.scrollable_frame = tk.Frame(self.canvas, bg="#595656")
 
@@ -324,21 +274,12 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         # Cấu hình nút "Send"
         send_button = tk.Button(self, text="Send", fg="#83eaf7", font="lucida 11 bold", bg="#7d7d7d", padx=10,
                                 relief="solid", bd=2, command=self.sent_message_format)
-<<<<<<< HEAD
         send_button.place(x=400, y=688)
 
         # Cấu hình text nhập tin nhắn
         self.entry = tk.Text(self, font="lucida 10 bold", width=38,height=2,
                              highlightcolor="blue", highlightthickness=1)
         self.entry.place(x=30, y=685)
-=======
-        send_button.place(x=400, y=680)
-
-        # Cấu hình text nhập tin nhắn
-        self.entry = tk.Text(self, font="lucida 10 bold", width=38, height=2,
-                             highlightcolor="blue", highlightthickness=1)
-        self.entry.place(x=40, y=681)
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
         self.entry.focus_set()
 
@@ -355,11 +296,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
                       (current_dir + '/emojis/u0001f631.png', '\U0001F631'), (current_dir + '/emojis/u0001f632.png', '\U0001F632'), (current_dir + '/emojis/u0001f634.png', '\U0001F634'),
                       (current_dir + '/emojis/u0001f637.png', '\U0001F637'), (current_dir + '/emojis/u0001f642.png', '\U0001F642'), (current_dir + '/emojis/u0001f64f.png', '\U0001F64F'),
                       (current_dir + '/emojis/u0001f920.png', '\U0001F920'), (current_dir + '/emojis/u0001f923.png', '\U0001F923'), (current_dir + '/emojis/u0001f928.png', '\U0001F928')] 
-<<<<<<< HEAD
         emoji_x_pos = 510
-=======
-        emoji_x_pos = 490
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         emoji_y_pos = 520
         for Emoji in emoji_data:
             global emojis
@@ -377,11 +314,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
             cur_index = emoji_data.index(Emoji)
             if (cur_index + 1) % 6 == 0:
                 emoji_y_pos += 25
-<<<<<<< HEAD
                 emoji_x_pos = 510
-=======
-                emoji_x_pos = 490
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
         # -------------------end of emoji code logic-------------------------------------
 
@@ -454,10 +387,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
     # Xử lý nhận tin nhắn
     def received_message_format(self, data):
         # Nhận thông tin tin nhắn
-<<<<<<< HEAD
         name = data['name']
-=======
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         message = data['message']
         from_ = data['from']
 
@@ -479,33 +409,19 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
 
         m_frame.columnconfigure(1, weight=1)
 
-<<<<<<< HEAD
         n_label = tk.Label(m_frame, bg="#595656",fg="white", text= name, font="lucida 7 bold",
                            justify="left", anchor="w")
         n_label.grid(row=0, column=1, padx=2, sticky="w")
         t_label = tk.Label(m_frame, bg="#595656",fg="white", text=datetime.now().strftime('%H:%M'), font="lucida 7 bold",
                            justify="left", anchor="w")
         t_label.grid(row=2, column=1, padx=2, sticky="w")
-=======
-        t_label = tk.Label(m_frame, bg="#595656",fg="white", text=datetime.now().strftime('%H:%M'), font="lucida 7 bold",
-                           justify="left", anchor="w")
-        t_label.grid(row=0, column=1, padx=2, sticky="w")
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
         m_label = tk.Label(m_frame, wraplength=250,fg="black", bg="#c5c7c9", text=message, font="lucida 9 bold", justify="left",
                            anchor="w")
         m_label.grid(row=1, column=1, padx=2, pady=2, sticky="w")
-<<<<<<< HEAD
-        
         i_label = tk.Label(m_frame, bg="#595656", image=im, bd=0)
         i_label.image = im
         i_label.grid(row=0, column=0, rowspan=4)
-=======
-
-        i_label = tk.Label(m_frame, bg="#595656", image=im)
-        i_label.image = im
-        i_label.grid(row=0, column=0, rowspan=2)
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
         m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
@@ -513,13 +429,8 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.canvas.yview_moveto(1.0)
 
     # Xử lý gửi tin nhắn
-<<<<<<< HEAD
     def sent_message_format(self, event=None):
         name = self.parent.user
-=======
-    def sent_message_format(self, event = None):
-
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
         message = self.entry.get('1.0', 'end-1c') # Lấy toàn bộ nội dung text
 
         if message:
@@ -529,11 +440,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
 
             # Gửi thông tin tin nhắn tới Server
             from_ = self.user_id
-<<<<<<< HEAD
             data = {'from': from_, 'message': message, 'name': name}
-=======
-            data = {'from': from_, 'message': message}
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
             data_bytes = pickle.dumps(data)
             self.client_socket.send(data_bytes)
             
@@ -542,7 +449,6 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
 
             m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
 
-<<<<<<< HEAD
             n_label = tk.Label(m_frame, bg="#595656", fg="white", text=name,
                                font="lucida 7 bold", justify="right", anchor="e")
             n_label.grid(row=0, column=0, padx=2, sticky="e")
@@ -550,11 +456,6 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
             t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
                                font="lucida 7 bold", justify="right", anchor="e")
             t_label.grid(row=2, column=0, padx=2, sticky="e")
-=======
-            t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
-                               font="lucida 7 bold", justify="right", anchor="e")
-            t_label.grid(row=0, column=0, padx=2, sticky="e")
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
             m_label = tk.Label(m_frame, wraplength=250, text=message, fg="black", bg="#40C961",
                                font="lucida 9 bold", justify="left",
@@ -563,11 +464,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
 
             i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
             i_label.image = self.user_image
-<<<<<<< HEAD
             i_label.grid(row=0, column=1, rowspan=4, sticky="e")
-=======
-            i_label.grid(row=0, column=1, rowspan=2, sticky="e")
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
 
             m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
@@ -629,19 +526,12 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
                 user = user.resize((45, 45), Image.LANCZOS)
                 user = ImageTk.PhotoImage(user)
 
-<<<<<<< HEAD
-                b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=20, width=80)
+                b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=15, width=100)
+                b.grid(row=self.y, column=0, sticky="w")
                 b.image = user
                 self.clients_online_labels[user_id] = (b, self.y)
 
                 b.place(x=530, y=self.y)
-=======
-                b = tk.Label(self, image=user, text=name, compound="left",fg="white", bg="#2b2b2b", font="lucida 10 bold", padx=15)
-                b.image = user
-                self.clients_online_labels[user_id] = (b, self.y)
-
-                b.place(x=500, y=self.y)
->>>>>>> eabcb218e79b529ad2b4a887803d30e92e915e1e
                 self.y += 60
         else:
             # NOTE: Xảy ra khi Client được Server thông báo có Client mới tham gia
