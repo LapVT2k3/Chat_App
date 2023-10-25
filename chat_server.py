@@ -72,7 +72,6 @@ def connection_requests():
         clients_data_bytes = pickle.dumps(clients_data) # Chuyển đối tượng thành chuỗi bytes
         # NOTE: Làm tương tự như khi chuyển ảnh
         clients_data_length = struct.pack('i', len(clients_data_bytes)) # Lưu kích thước đối tượng
-
         client_socket.sendall(clients_data_length) # Gửi kích thước danh sách
         time.sleep(0.5) # Delay để Client kịp nhận tin
         client_socket.sendall(clients_data_bytes) # Gửi danh sách
