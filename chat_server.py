@@ -8,7 +8,7 @@ import time
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # AF_INET: IPv4
 # SOCK_STREAM: TCP
-server_socket.bind(('127.0.0.1', 12345)) # Cấu hình IP, Port của Server
+server_socket.bind(('localhost', 12345)) # Cấu hình IP, Port của Server
 server_socket.listen(4) # Tối đa 4 kết nối
 
 clients_connected = {} # Chứa thông tin tên và ID của các Client kết nối tới Server
