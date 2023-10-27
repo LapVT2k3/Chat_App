@@ -569,7 +569,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
                 self.y -= 60
             elif user_id > client_id:
                 y_co -= 60
-                b.place(x=530, y=y_co)
+                b.place(x=500, y=y_co)
                 self.clients_online_labels[user_id] = (b, y_co)
 
     # Chèn biểu cảm vào tin nhắn
