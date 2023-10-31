@@ -1,14 +1,31 @@
+import os
 import socket
 import struct
 import pickle
 import threading
 import time
+import pyodbc
+
+
+SIGNIN = 'signin'
+SIGNUP = 'signup'
+IP = '192.168.52.100'
+PORT = 12345
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Kết nối tới database
+conx = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};\
+    SERVER=LAPTOP-84HLVAJD\SQLEXPRESS; DATABASE=BTL_Python_Account;\
+        UID=vtl; PWD=19122003;')
+
+cursor = conx.cursor()
 
 # Cấu hình socket bên server
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # AF_INET: IPv4
 # SOCK_STREAM: TCP
-server_socket.bind(('localhost', 12345)) # Cấu hình IP, Port của Server
+server_socket.bind((IP, PORT)) # Cấu hình IP, Port của Server
 server_socket.listen(4) # Tối đa 4 kết nối
 
 clients_connected = {} # Chứa thông tin tên và ID của các Client kết nối tới Server
@@ -35,46 +52,63 @@ def connection_requests():
         else:
             client_socket.sendall('allowed'.encode())
         
-        # Nhận tên người dùng   
         try:
-            client_name = client_socket.recv(1024).decode('utf-8')
+            status = client_socket.recv(1024).decode('utf-8')
         except:
             print(f"{address} disconnected")
             client_socket.close()
             continue
         
+        if status == SIGNUP:
+            data_bytes = client_socket.recv(1024)
+            data = pickle.loads(data_bytes)
+            
+            cursor.execute("select * from Account where username = ?", data['username'])
+            result = cursor.fetchall()
+            
+            if result:
+                client_socket.send('fail'.encode('utf-8'))
+            else:
+                cursor.execute("insert Account values (?, ?, ?)", data['username'], data['pass'], data['name'])
+                cursor.commit()
+                client_socket.send('success'.encode('utf-8'))
+            client_socket.close()
+            continue
+        elif status == SIGNIN:
+            data_bytes = client_socket.recv(1024)
+            data = pickle.loads(data_bytes)
+            
+            cursor.execute("select * from Account where username = ? and pass = ?", data['username'], data['pass'])
+            result = cursor.fetchone()
+            if result:
+                client_socket.send('success'.encode('utf-8'))
+            else:
+                client_socket.send('fail'.encode('utf-8'))
+                client_socket.close()
+                continue
+        
+        client_name = result[2]
+        
+        client_socket.recv(1024)
+        client_socket.send(client_name.encode('utf-8'))
+        
+        with open(current_dir + '/images/user.png', 'rb') as f:
+            image_bytes = f.read()
+        image_extension = 'png'
         print(f"{address} identified itself as {client_name}")
 
         # Lưu tên, id người dùng
         clients_connected[client_socket] = (client_name, count)
         
-        # Nhận ảnh người dùng
-        # Nhận kích thước ảnh
-        image_size_bytes = client_socket.recv(1024)
-        image_size_int = struct.unpack('i', image_size_bytes)[0] # Giải nén kích thước ảnh ra dạng int
-
-        client_socket.sendall('received'.encode()) # Gửi thông báo đã nhận kích thước ảnh tới Client
-        image_extension = client_socket.recv(1024).decode('utf-8') # Nhận đuôi ảnh
-
-        # Lưu dữ liệu ảnh dạng byte khi kích thước ảnh vượt quá 1 Mb
-        b = b'' # Lưu dữ liệu ảnh
-        # Đọc từng Mb một lần
-        while True:
-            image_bytes = client_socket.recv(1024)
-            b += image_bytes
-            if len(b) == image_size_int:
-                break
-        
         # Lưu dữ liệu Client    
-        clients_data[count] = (client_name, b, image_extension)
+        clients_data[count] = (client_name, image_bytes, 'png')
         
         # Gửi danh sách dữ liệu người dùng tới client đã connect
         clients_data_bytes = pickle.dumps(clients_data) # Chuyển đối tượng thành chuỗi bytes
-        # NOTE: Làm tương tự như khi chuyển ảnh
         clients_data_length = struct.pack('i', len(clients_data_bytes)) # Lưu kích thước đối tượng
-
-        client_socket.sendall(clients_data_length) # Gửi kích thước danh sách
-        time.sleep(0.5) # Delay để Client kịp nhận tin
+        client_socket.recv(1024)
+        client_socket.send(clients_data_length) # Gửi kích thước danh sách
+        client_socket.recv(1024) 
         client_socket.sendall(clients_data_bytes) # Gửi danh sách
         
         # Nếu phía Client đã nhận được danh sách
@@ -84,44 +118,46 @@ def connection_requests():
             # Gửi thông báo tới các Client khác khi có 1 Client mới kết nối tới Server
             for client in clients_connected:
                 if client != client_socket:
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     client.sendall('notification'.encode())
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     # Gửi các thông tin của Client mới đăng nhập
                     data = pickle.dumps(
                         {'message': f"{clients_connected[client_socket][0]} joined the chat", 'extension': image_extension,
-                         'image_bytes': b, 'name': clients_connected[client_socket][0], 'n_type': 'joined', 'id': count})
+                         'image_bytes': image_bytes, 'name': clients_connected[client_socket][0], 'n_type': 'joined', 'id': count})
                     
                     data_length_bytes = struct.pack('i', len(data))
                     client.sendall(data_length_bytes)
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     client.sendall(data)
                     
         count += 1
         # Tạo đa luồng nhận tin nhắn từ Client
         t = threading.Thread(target=receive_data, args=(client_socket,))
+        
         t.start()
+        
 
 # Nhận thông tin từ Client
 def receive_data(client_socket):
     while True:
         try: # Nhận tin nhắn từ Client
-            data_bytes = client_socket.recv(1024)
+            data_tyte = client_socket.recv(1024).decode('utf-8')
         except: # Khi 1 Client ngắt kết nối
             print(f"{clients_connected[client_socket][0]} disconnected")
 
             # Thông báo tới các Client khác
             for client in clients_connected:
                 if client != client_socket:
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     client.sendall('notification'.encode())
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     data = pickle.dumps({'message': f"{clients_connected[client_socket][0]} left the chat",
                                          'id': clients_connected[client_socket][1], 'n_type': 'left'})
                     
                     data_length_bytes = struct.pack('i', len(data))
                     client.sendall(data_length_bytes)
-                    time.sleep(0.5)
+                    time.sleep(0.05)
                     client.sendall(data)
 
             # Xóa Client đó ra khỏi danh sách kết nối
@@ -129,13 +165,49 @@ def receive_data(client_socket):
             del clients_connected[client_socket]
             client_socket.close()
             break
-        
-        # Gửi tin nhắn của Client đó tới Client khác
-        for client in clients_connected:
-            if client != client_socket:
-                time.sleep(0.5)
-                client.sendall('message'.encode())
-                time.sleep(0.5)
-                client.sendall(data_bytes)
+             
+        if data_tyte == 'message':
+            data_bytes = client_socket.recv(1024)
+            # Gửi tin nhắn của Client đó tới Client khác
+            for client in clients_connected:
+                if client != client_socket:
+                    time.sleep(0.05)
+                    client.send('message'.encode())
+                    time.sleep(0.05)
+                    client.sendall(data_bytes)
+        elif data_tyte == 'file':
+            info_sender = pickle.loads(client_socket.recv(1024))
+            from_ = info_sender['from']
+            name = info_sender['name']
+            
+            file_name = client_socket.recv(1024).decode('utf-8')
+                        
+            file_bytes = b""
+            done = False
+            
+            while not done:
+                data = client_socket.recv(1024)
+                file_bytes += data
+                if file_bytes[-5:] == b"<END>":
+                    done = True
+            file_bytes = file_bytes[:-5]
+            
+            for client in clients_connected:
+                if client != client_socket:
+                    time.sleep(0.05)
+                    client.send('file'.encode())
+                    time.sleep(0.05)
+                    client.send(pickle.dumps({'from': from_, 'name': name, 'file_name': file_name}))
+                    time.sleep(0.05)
+                    client.send(file_bytes)
+                    client.send(b"<END>")
+                     
 
-connection_requests()
+try:
+    connection_requests()
+except KeyboardInterrupt:
+    pass
+finally:
+    server_socket.close()
+    conx.close()   
+

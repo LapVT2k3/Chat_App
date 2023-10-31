@@ -1,4 +1,5 @@
 import socket
+import time
 import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
 from tkinter import ttk
@@ -9,11 +10,15 @@ from datetime import datetime
 import os
 import threading
 import struct
+import customtkinter as ctk
 
 # Lấy đường dẫn thư mục chứa file hiện tại
 current_dir = os.path.dirname(os.path.abspath(__file__))
-IP = 'localhost'
+SIGNIN = 'signin'
+SIGNUP = 'signup'
+IP = '192.168.52.100'
 PORT = 12345
+BUFF_SIZE = 65536
 
 # Thay đổi DPI giúp ứng dụng hiển thị đẹp hơn trên màn hình có độ phân giải cao
 try:
@@ -22,148 +27,95 @@ try:
 except:
     pass
 
-# Màn hình đăng nhập
-class FirstScreen(tk.Tk): # Kế thừa lớp tk.Tk để tạo giao diện
+class SignIn(tk.Tk):
     def __init__(self):
-        super().__init__() # Khởi tạo lớp cha để tạo cửa sổ giao diện
-        self.attributes('-topmost', True)
-        # Cấu hình cửa sổ giao diện
-        screen_width, screen_height = self.winfo_screenwidth(), self.winfo_screenheight() 
-        self.x_co = int((screen_width / 2) - (550 / 2))
-        self.y_co = int((screen_height / 2) - (400 / 2)) - 80
+        super().__init__()
+        self.title("LogIn")
+        self.geometry('925x500+300+200')
+        self.configure(bg="#fff")
+        self.resizable(False, False)
                 
-        self.geometry(f"550x400+{self.x_co}+{self.y_co}")
-        self.title("Chat Room")
-
+        img = Image.open(current_dir + '/images/signIn.png')
+        img = ImageTk.PhotoImage(img)
+        tk.Label(self, image=img, bg='white').place(x=50, y=50)
         
-        self.user = None # Tên người dùng
-        self.image_extension = None # Đuôi file ảnh
-        self.image_path = None # Đường dẫn ảnh
-
-        # Tạo First Frame
-        self.first_frame = tk.Frame(self, bg="sky blue")
-        self.first_frame.pack(fill="both", expand=True)
-
-        # Icon App
-        app_icon = Image.open(current_dir + '\\images\\icon_chat.png')
-        app_icon = ImageTk.PhotoImage(app_icon)
-        self.iconphoto(False, app_icon)
-
-        # Background
-        background = Image.open(current_dir + '\\images\\bg_reg.png')
-        background = background.resize((550, 400), Image.LANCZOS) # Thay đổi kích cỡ và làm mịn ảnh
-        background = ImageTk.PhotoImage(background)
-        tk.Label(self.first_frame, image=background).place(x=0, y=0)
-
-        # Icon của nút Upload ảnh
-        upload_image = Image.open(current_dir + '\\images\\icon_upload.jpg')
-        upload_image = upload_image.resize((25, 25), Image.LANCZOS)
-        upload_image = ImageTk.PhotoImage(upload_image)
-
-        self.user_image = current_dir + '\\images\\user.png' 
-
-        # Label "Login"
-        head = tk.Label(self.first_frame, text="Login", font="lucida 17 bold", bg="#00FFFF")
-        head.place(x=0, y=0, width=550)
-
-        # Label chứa ảnh
-        self.profile_label = tk.Label(self.first_frame, bg="grey")
-        self.profile_label.place(x=200, y=63, width=160, height=150)
-
-        # Nút upload ảnh
-        upload_button = tk.Button(self.first_frame, image=upload_image, compound="left", text="Upload Image",
-                                  cursor="hand2", font="lucida 12 bold", padx=2, command=self.add_photo)
-        upload_button.place(x=200, y=220)
-
-        # Label "Username"
-        self.username = tk.Label(self.first_frame, text="Username", font="lucida 12 bold", bg = "SystemWindow")
-        self.username.place(x=90, y=280)
-
-        # Ô nhập tên
-        self.username_entry = tk.Entry(self.first_frame,  font="lucida 12 bold", width=12, highlightcolor="blue", highlightthickness=1)
-        self.username_entry.place(x=210, y=280)
-        self.username_entry.focus_set()
-
-        # Nút "Connect"
-        submit_button = tk.Button(self.first_frame, text="Connect", font="lucida 12 bold", padx=30, cursor="hand2",
-                                  command=self.process_data, bg="#16cade", relief="solid", bd=2)
-
-        submit_button.place(x=200, y=335)
+        self.name = ""
         
-        self.mainloop() # Chạy giao diện
+        # ---------------------------------------------
+        # ---------------------------------------------
+        # Một số hàm xử lý sự kiện
+        def showFrameSignUp():
+            self.signIn_frame.place_forget()
+            signUp_frame.place(x=480,y=20)
+            
+        def showFrameSignIn():
+            signUp_frame.place_forget()
+            self.signIn_frame.place(x=480,y=70)
+            
+        def signUp():
+            if self.pass_entry1.get() == self.pass_entry2.get():
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                try:
+                    client_socket.connect((IP, PORT))
+                    status = client_socket.recv(1024).decode()
+                    if status == 'not_allowed': # Nếu server đã quá 4 người
+                        client_socket.close()
+                        messagebox.showinfo(title="Can't connect !", message='Sorry, server is completely occupied.'
+                                                                            'Try again later')
+                        return
 
-    def add_photo(self):
-        self.image_path = filedialog.askopenfilename() # Hiển thị hộp thoại chọn file
-        image_name = os.path.basename(self.image_path)  # Tách tên file ảnh từ đường dẫn
-        self.image_extension = image_name[image_name.rfind('.')+1:] # Lấy đuôi file ảnh
-
-        # Lấy ảnh lưu lại và đặt ảnh trong lable chứa ảnh
-        if self.image_path:
-            # Lấy ảnh
-            user_image = Image.open(self.image_path)
-            user_image = user_image.resize((150, 140), Image.LANCZOS)
-            # Lưu ảnh
-            user_image.save('resized'+image_name)
-            user_image.close()
-            self.image_path = 'resized'+image_name
-            # Đặt ảnh vào lable chứa ảnh
-            user_image = Image.open(self.image_path)
-            user_image = ImageTk.PhotoImage(user_image)
-            self.profile_label.image = user_image
-            self.profile_label.config(image=user_image)
-
-    # Xử lý kết nối tới server
-    def process_data(self):
-        if self.username_entry.get():
-            self.profile_label.config(image="")
-
-            # Lấy tên tối đa 6 ký tự
-            if len((self.username_entry.get()).strip()) > 6:
-                self.user = self.username_entry.get()[:6]+"."
+                except ConnectionRefusedError: # Lỗi server chưa mở
+                    messagebox.showinfo(title="Can't connect !", message="Server is offline , try again later.")
+                    print("Server is offline , try again later.")
+                    return
+                client_socket.send(SIGNUP.encode('utf-8'))
+                data = {'username': self.user_entry1.get(), 'pass': self.pass_entry1.get(), 'name': self.name_entry.get()}
+                data_bytes = pickle.dumps(data)
+                client_socket.sendall(data_bytes)
+                notification = client_socket.recv(1024).decode('utf-8')
+                if notification == 'success':
+                    messagebox.showinfo(title="Success!", message='Tạo tài khoản thành công')
+                elif notification == 'fail':
+                    messagebox.showinfo(title="Error!", message='Tài khoản đã tồn tại. Vui lòng sử dụng tên tài khoản khác')
+                
+                client_socket.close()    
+                
             else:
-                self.user = self.username_entry.get()
-
-            # Cấu hình socket bên client
+                messagebox.showinfo(title="Error!", message='Mật khẩu không trùng nhau')
+                
+        def signIn():
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
             try:
                 client_socket.connect((IP, PORT))
                 status = client_socket.recv(1024).decode()
                 if status == 'not_allowed': # Nếu server đã quá 4 người
                     client_socket.close()
                     messagebox.showinfo(title="Can't connect !", message='Sorry, server is completely occupied.'
-                                                                         'Try again later')
+                                                                        'Try again later')
                     return
 
             except ConnectionRefusedError: # Lỗi server chưa mở
                 messagebox.showinfo(title="Can't connect !", message="Server is offline , try again later.")
                 print("Server is offline , try again later.")
+                return  
+            client_socket.send(SIGNIN.encode('utf-8'))
+            data = {'username': self.user_entry.get(), 'pass': self.pass_entry.get()}
+            data_bytes = pickle.dumps(data)
+            client_socket.sendall(data_bytes)
+            notification = client_socket.recv(1024).decode('utf-8')
+            if notification == 'success':
+                messagebox.showinfo(title="Success!", message='Đăng nhập thành công')  
+                client_socket.send('received'.encode())
+            elif notification == 'fail':
+                messagebox.showinfo(title="Error!", message='Tài khoản hoặc mật khẩu không chính xác')
+                client_socket.close()
                 return
-
-            # Gửi tên người dùng cho Server
-            client_socket.send(self.user.encode('utf-8'))
-
-            # Gửi ảnh người dùng cho Server
-            # Đọc dữ liệu ảnh
-            if not self.image_path:
-                self.image_path = self.user_image
-            with open(self.image_path, 'rb') as image_data: # Đọc dưới chế độ nhị phân
-                image_bytes = image_data.read()
-
-            # NOTE: Nếu ảnh có kích thước lớn hơn 1 Mb (1024 bytes) thì phải gửi kích thước ảnh
-            #       để Server có thể đọc từng Mb 1 lần 
-            # Gửi kích thước độ lớn của ảnh
-            image_size_int = len(image_bytes)
-            image_size_bytes = struct.pack('i', image_size_int) # Nén kích thước ảnh thành chuỗi bytes
-            client_socket.send(image_size_bytes)
-
-            if client_socket.recv(1024).decode() == 'received': 
-                client_socket.send(str(self.image_extension).strip().encode()) # Gửi đuôi ảnh
-
-            client_socket.send(image_bytes) # Gửi dữ liệu ảnh
-
+            self.name = client_socket.recv(1024).decode('utf-8')
+            client_socket.send('received'.encode())
             clients_data_size_bytes = client_socket.recv(1024)
+            client_socket.send('received'.encode())
             clients_data_size_int = struct.unpack('i', clients_data_size_bytes)[0]
-            
             # Nhận danh sách dữ liệu các người dùng kết nối tới Server
             # Lưu dữ liệu danh sách dữ liệu người kết nối tới Server dạng byte
             b = b''
@@ -173,26 +125,192 @@ class FirstScreen(tk.Tk): # Kế thừa lớp tk.Tk để tạo giao diện
                 if len(b) == clients_data_size_int:
                     break
             # Giải nén dữ liệu danh sách về dạng ban đầu
-            clients_connected = pickle.loads(b)
+            clients_data = pickle.loads(b)
 
             # Gửi thông báo đã nhận danh sách tới Server
             client_socket.send('data_received'.encode())
-
+            
             # Nhận ID
             user_id = struct.unpack('i', client_socket.recv(1024))[0]
-            print(f"{self.user} is user no. {user_id}")
+            print(f"{self.name} is user no. {user_id}")
             
             # Mở cửa sổ chat
-            ChatScreen(self, self.first_frame, client_socket, clients_connected, user_id)
+            ChatScreen(self, self.signIn_frame, client_socket, clients_data, user_id)
+
+
+        # ----------------------------------
+        # ----------------------------------
+        # ----------------------------------
+        # Frame đăng nhập
+        self.signIn_frame = tk.Frame(self, width=350, height=350 ,bg='white')
+        self.signIn_frame.place(x=480, y=70)
+        
+        heading = tk.Label(self.signIn_frame, text='Sign in', fg='#57a1f8', bg='white', font=('Microsoft YaHei UI Light', 23, 'bold'))
+        heading.place(x=110, y=5)
+        # -----------------------------------------
+        def on_enter(e):
+            name = self.user_entry.get()
+            if name == 'Username':
+                self.user_entry.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.user_entry.get()
+            if name == '':
+                self.user_entry.insert(0, 'Username')
+        
+        # Ô nhập tài khoản
+        self.user_entry = tk.Entry(self.signIn_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.user_entry.place(x=30, y=80)
+        self.user_entry.insert(0, 'Username')
+        self.user_entry.bind('<FocusIn>', on_enter)
+        self.user_entry.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(self.signIn_frame, width=350, height=2, bg='black').place(x=25, y=110)
+        
+        # -----------------------------------------
+        def on_enter(e):
+            self.pass_entry.config(show='*')
+            name = self.pass_entry.get()
+            if name == 'Password':
+                self.pass_entry.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.pass_entry.get()
+            if name == '':
+                self.pass_entry.config(show='')
+                self.pass_entry.insert(0, 'Password')
+        
+        # Ô nhập mật khẩu
+        self.pass_entry = tk.Entry(self.signIn_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.pass_entry.place(x=30, y=150)
+        self.pass_entry.insert(0, 'Password')
+        self.pass_entry.bind('<FocusIn>', on_enter)
+        self.pass_entry.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(self.signIn_frame, width=350, height=2, bg='black').place(x=25, y=180)
+        
+        
+        # Button đăng nhập
+        tk.Button(self.signIn_frame, width=40, pady=7, text='Sign In', bg='#57a1f8', fg='white', border=0, command=signIn).place(x=35,y=210)
+        
+        tk.Label(self.signIn_frame, text="Don't have an account?",fg='black',bg='white',font=('Microsoft YaHei UI Light', 9)).place(x=75,y=270)
+        
+        # Button đăng ký
+        tk.Button(self.signIn_frame, width=6,text='Sign Up',border=0,bg='white',cursor='hand2',fg='#57a1f8', command=showFrameSignUp).place(x=245, y=268)
+        
+        # ----------------------------------
+        # ----------------------------------
+        # ----------------------------------
+        # Frame đăng ký
+        signUp_frame = tk.Frame(self, width=350, height=450 ,bg='white')
+        
+        heading1 = tk.Label(signUp_frame, text='Sign up', fg='#57a1f8', bg='white', font=('Microsoft YaHei UI Light', 23,'bold'))
+        heading1.place(x=100,y=5)
+        
+        # -----------------------------------------
+        def on_enter(e):
+            name = self.user_entry1.get()
+            if name == 'Username':
+                self.user_entry1.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.user_entry1.get()
+            if name == '':
+                self.user_entry1.insert(0, 'Username')
+        
+        # Ô nhập tài khoản
+        self.user_entry1 = tk.Entry(signUp_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.user_entry1.place(x=30, y=80)
+        self.user_entry1.insert(0, 'Username')
+        self.user_entry1.bind('<FocusIn>', on_enter)
+        self.user_entry1.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(signUp_frame, width=350, height=2, bg='black').place(x=25, y=110)
+        
+        # -------------------------------------------
+        def on_enter(e):
+            self.pass_entry1.config(show='*')
+            name = self.pass_entry1.get()
+            if name == 'Password':
+                self.pass_entry1.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.pass_entry1.get()
+            if name == '':
+                self.pass_entry1.config(show='')
+                self.pass_entry1.insert(0, 'Password')
+        
+        # Ô nhập mật khẩu
+        self.pass_entry1 = tk.Entry(signUp_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.pass_entry1.place(x=30, y=150)
+        self.pass_entry1.insert(0, 'Password')
+        self.pass_entry1.bind('<FocusIn>', on_enter)
+        self.pass_entry1.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(signUp_frame, width=350, height=2, bg='black').place(x=25, y=180)
+        
+        # -------------------------------------------
+        def on_enter(e):
+            self.pass_entry2.config(show='*')
+            name = self.pass_entry2.get()
+            if name == 'Confirm Password':
+                self.pass_entry2.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.pass_entry2.get()
+            if name == '':
+                self.pass_entry2.config(show='')
+                self.pass_entry2.insert(0, 'Confirm Password')
+        
+        # Ô nhập lại mật khẩu
+        self.pass_entry2 = tk.Entry(signUp_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.pass_entry2.place(x=30, y=220)
+        self.pass_entry2.insert(0, 'Confirm Password')
+        self.pass_entry2.bind('<FocusIn>', on_enter)
+        self.pass_entry2.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(signUp_frame, width=350, height=2, bg='black').place(x=25, y=250)
+        
+        # -------------------------------
+        def on_enter(e):
+            name = self.name_entry.get()
+            if name == 'Name':
+                self.name_entry.delete(0, 'end')
+        
+        def on_leave(e):
+            name = self.name_entry.get()
+            if name == '':
+                self.name_entry.insert(0, 'Name')
+        
+        # Ô nhập tên người dùng
+        self.name_entry = tk.Entry(signUp_frame, width=25, fg='black', border=0, bg='white', font=('Microsoft YaHei UI Light', 11))
+        self.name_entry.place(x=30, y=290)
+        self.name_entry.insert(0, 'Name')
+        self.name_entry.bind('<FocusIn>', on_enter)
+        self.name_entry.bind('<FocusOut>', on_leave)
+        
+        tk.Frame(signUp_frame, width=350, height=2, bg='black').place(x=25, y=320)
+        
+        # -------------------------------
+        # Button đăng ký
+        tk.Button(signUp_frame, width=40, pady=7, text='Sign In', bg='#57a1f8', fg='white', border=0, command=signUp).place(x=35,y=350)
+        
+        tk.Label(signUp_frame, text="Have an account already?",fg='black',bg='white',font=('Microsoft YaHei UI Light', 9)).place(x=75,y=420)
+        
+        # Button đăng nhập
+        tk.Button(signUp_frame, width=6,text='Sign In',border=0,bg='white',cursor='hand2',fg='#57a1f8', command=showFrameSignIn).place(x=255, y=418)
+        
+        self.mainloop()
+        
 
 # Màn hình chat
 class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao diện và các đối tượng đồ họa khác
-    def __init__(self, parent, first_frame, client_socket, clients_connected, user_id):
+    def __init__(self, parent, signIn_frame, client_socket, clients_connected, user_id):
         super().__init__(parent)
         self.window = 'ChatScreen' # Đặt tên để xác định cửa sổ
 
-        self.first_frame = first_frame
-        self.first_frame.pack_forget() # Ẩn First Frame
+        self.signIn_frame = signIn_frame
+        self.signIn_frame.pack_forget() # Ẩn First Frame
 
         self.parent = parent
         self.parent.bind('<Return>', lambda e: self.sent_message_format(e)) # Gán hàm xử lý sự kiện khi nhấn phím enter
@@ -212,19 +330,19 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         self.parent.geometry(f"680x750+{x_co}+{y_co}")
 
         global background
-        background = Image.open(current_dir + '\\images\\bg_chat.jpg')
+        background = Image.open(current_dir + '/images/bg_chat.jpg')
         background = background.resize((1600, 1900), Image.LANCZOS) # Thay đổi kích cỡ và làm mịn ảnh
         background = ImageTk.PhotoImage(background)
         self.create_image(0, 0, image = background)
 
         # Lấy ảnh người dùng
-        user_image = Image.open(self.parent.image_path)
+        user_image = Image.open(current_dir + '/images/user.png')
         user_image = user_image.resize((40, 40), Image.LANCZOS)
         self.user_image = ImageTk.PhotoImage(user_image)
 
         # Tạo ảnh nhóm
         global group_photo
-        group_photo = Image.open(current_dir + '\\images\\group_ca.png')
+        group_photo = Image.open(current_dir + '/images/group_ca.png')
         group_photo = group_photo.resize((60, 60), Image.LANCZOS)
         group_photo = ImageTk.PhotoImage(group_photo)
         self.create_image(60, 40, image=group_photo)
@@ -274,8 +392,16 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         # Cấu hình nút "Send"
         send_button = tk.Button(self, text="Send", fg="#83eaf7", font="lucida 11 bold", bg="#7d7d7d", padx=10,
                                 relief="solid", bd=2, command=self.sent_message_format)
-        send_button.place(x=400, y=688)
-
+        send_button.place(x=450, y=688)
+        
+        
+        
+        # Cấu hình nút "Send File"
+        send_file_button = tk.Button(self, text="Send File", fg="#83eaf7", font="lucida 11 bold", bg="#7d7d7d", padx=10,
+                                relief="solid", bd=2, command=self.sent_file_format)
+        
+        send_file_button.place(x=550,y=688)
+        
         # Cấu hình text nhập tin nhắn
         self.entry = tk.Text(self, font="lucida 10 bold", width=38,height=2,
                              highlightcolor="blue", highlightthickness=1)
@@ -325,7 +451,7 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         t_label = tk.Label(m_frame, bg="#d9d5d4", text=datetime.now().strftime('%H:%M'), font="lucida 9 bold")
         t_label.pack()
 
-        m_label = tk.Label(m_frame, wraplength=250, text=f"Happy Chatting {self.parent.user}",
+        m_label = tk.Label(m_frame, wraplength=250, text=f"Happy Chatting {self.parent.name}",
                            font="lucida 10 bold", bg="orange")
         m_label.pack(fill="x")
 
@@ -359,10 +485,25 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
                     data = pickle.loads(b)
                     self.notification_format(data)
 
-                else: # Nếu data_type = 'message'
+                elif data_type == 'message':
                     data_bytes = self.client_socket.recv(1024) # Nhận tin nhắn từ client khác
                     data = pickle.loads(data_bytes)
                     self.received_message_format(data) # Xử lý tin nhắn
+                elif data_type == 'file':
+                    info_sender = pickle.loads(self.client_socket.recv(1024))
+                    
+                    file_bytes = b""
+                    done = False
+                    
+                    while not done:
+                        data = self.client_socket.recv(1024)
+                        file_bytes += data
+                        if file_bytes[-5:] == b"<END>":
+                            done = True
+                    file_bytes = file_bytes[:-5]
+                    
+                    self.received_file_format(info_sender, file_bytes)
+                    
 
             except ConnectionAbortedError: # Lỗi khi ngắt kết nối (thoát chương trình)
                 print("you disconnected ...")
@@ -384,6 +525,100 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         else:
             self.parent.destroy()
 
+    # Xử lý gửi tin nhắn
+    def sent_message_format(self, event=None):
+        name = self.parent.name
+        print(name)
+        message = self.entry.get('1.0', 'end-1c') # Lấy toàn bộ nội dung text
+
+        if message:
+            if event:
+                message = message.strip()
+            self.entry.delete("1.0", "end-1c") # Xóa text
+
+            self.client_socket.send('message'.encode('utf-8'))
+            # Gửi thông tin tin nhắn tới Server
+            from_ = self.user_id
+            data = {'from': from_, 'message': message, 'name': name}
+            data_bytes = pickle.dumps(data)
+            self.client_socket.send(data_bytes)
+            
+            # Cấu hình giao diện tin nhắn được gửi
+            m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+
+            m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
+
+            n_label = tk.Label(m_frame, bg="#595656", fg="white", text=name,
+                               font="lucida 7 bold", justify="right", anchor="e")
+            n_label.grid(row=0, column=0, padx=2, sticky="e")
+
+            t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
+                               font="lucida 7 bold", justify="right", anchor="e")
+            t_label.grid(row=2, column=0, padx=2, sticky="e")
+
+            m_label = tk.Label(m_frame, wraplength=250, text=message, fg="black", bg="#40C961",
+                               font="lucida 9 bold", justify="left",
+                               anchor="e")
+            m_label.grid(row=1, column=0, padx=2, pady=2, sticky="e")
+
+            i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
+            i_label.image = self.user_image
+            i_label.grid(row=0, column=1, rowspan=4, sticky="e")
+
+            m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+
+            self.canvas.update_idletasks() # Cập nhật giao diện chat khi tin nhắn gửi lên
+            self.canvas.yview_moveto(1.0)
+
+    # Xử lý gửi file
+    def sent_file_format(self):
+        file_path = filedialog.askopenfilename()
+        
+        if not file_path:
+            return
+        
+        file = open(file_path, 'rb')
+        file_name = os.path.basename(file_path)
+        
+        self.client_socket.send('file'.encode('utf-8'))
+        
+        name = self.parent.name
+        from_ = self.user_id
+        self.client_socket.send(pickle.dumps({'from': from_, 'name': name}))
+        time.sleep(0.1)
+        self.client_socket.send(file_name.encode('utf-8'))
+        time.sleep(0.1)
+        data = file.read()
+        self.client_socket.sendall(data)
+        self.client_socket.send(b"<END>")
+        
+        # Cấu hình giao diện tin nhắn được gửi
+        m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+
+        m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
+
+        n_label = tk.Label(m_frame, bg="#595656", fg="white", text=name,
+                            font="lucida 7 bold", justify="right", anchor="e")
+        n_label.grid(row=0, column=0, padx=2, sticky="e")
+
+        t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
+                            font="lucida 7 bold", justify="right", anchor="e")
+        t_label.grid(row=2, column=0, padx=2, sticky="e")
+
+        m_button = tk.Button(m_frame, text=file_name, fg="black", bg="#40C961",
+                            font="lucida 9 bold", justify="left", cursor='hand2',
+                            anchor="e", command=lambda: self.download_file(file_name, data))
+        m_button.grid(row=1, column=0, padx=2, pady=2, sticky="e")
+
+        i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
+        i_label.image = self.user_image
+        i_label.grid(row=0, column=1, rowspan=4, sticky="e")
+
+        m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
+
+        self.canvas.update_idletasks() # Cập nhật giao diện chat khi tin nhắn gửi lên
+        self.canvas.yview_moveto(1.0)
+     
     # Xử lý nhận tin nhắn
     def received_message_format(self, data):
         # Nhận thông tin tin nhắn
@@ -426,51 +661,67 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
         m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
         self.canvas.update_idletasks()
-        self.canvas.yview_moveto(1.0)
+        self.canvas.yview_moveto(1.0) 
+     
+    # Xử lý nhận file
+    def received_file_format(self, info_sender, file_bytes): 
+        from_ = info_sender['from']
+        name = info_sender['name']
+        file_name = info_sender['file_name']    
+        
+        # Lấy thông tin dữ liệu ảnh từ thông tin Client
+        sender_image = self.clients_connected[from_][1]
+        sender_image_extension = self.clients_connected[from_][2]
 
-    # Xử lý gửi tin nhắn
-    def sent_message_format(self, event=None):
-        name = self.parent.user
-        message = self.entry.get('1.0', 'end-1c') # Lấy toàn bộ nội dung text
+        # Lưu ảnh ra file 
+        with open(f"{from_}.{sender_image_extension}", 'wb') as f:
+            f.write(sender_image)
 
-        if message:
-            if event:
-                message = message.strip()
-            self.entry.delete("1.0", "end-1c") # Xóa text
+        # Lấy dữ liệu ảnh
+        im = Image.open(f"{from_}.{sender_image_extension}")
+        im = im.resize((40, 40), Image.LANCZOS)
+        im = ImageTk.PhotoImage(im)
 
-            # Gửi thông tin tin nhắn tới Server
-            from_ = self.user_id
-            data = {'from': from_, 'message': message, 'name': name}
-            data_bytes = pickle.dumps(data)
-            self.client_socket.send(data_bytes)
-            
-            # Cấu hình giao diện tin nhắn được gửi
-            m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
+        # Cấu hình giao diện nhận tin nhắn
+        m_frame = tk.Frame(self.scrollable_frame, bg="#595656")
 
-            m_frame.columnconfigure(0, weight=1) # Cấu hình cột 0 trong m_frame ưu tiên mở rộng hoặc co lại
+        m_frame.columnconfigure(1, weight=1)
 
-            n_label = tk.Label(m_frame, bg="#595656", fg="white", text=name,
-                               font="lucida 7 bold", justify="right", anchor="e")
-            n_label.grid(row=0, column=0, padx=2, sticky="e")
+        n_label = tk.Label(m_frame, bg="#595656",fg="white", text= name, font="lucida 7 bold",
+                           justify="left", anchor="w")
+        n_label.grid(row=0, column=1, padx=2, sticky="w")
+        t_label = tk.Label(m_frame, bg="#595656",fg="white", text=datetime.now().strftime('%H:%M'), font="lucida 7 bold",
+                           justify="left", anchor="w")
+        t_label.grid(row=2, column=1, padx=2, sticky="w")
+        
+        m_button = tk.Button(m_frame, text=file_name, fg="black", bg="#c5c7c9",
+                            font="lucida 9 bold", justify="left", cursor='hand2',
+                            anchor="w", command=lambda: self.download_file(file_name, file_bytes))
+        m_button.grid(row=1, column=1, padx=2, pady=2, sticky="w")
+        
+        i_label = tk.Label(m_frame, bg="#595656", image=im, bd=0)
+        i_label.image = im
+        i_label.grid(row=0, column=0, rowspan=4)
 
-            t_label = tk.Label(m_frame, bg="#595656", fg="white", text=datetime.now().strftime('%H:%M'),
-                               font="lucida 7 bold", justify="right", anchor="e")
-            t_label.grid(row=2, column=0, padx=2, sticky="e")
+        m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
 
-            m_label = tk.Label(m_frame, wraplength=250, text=message, fg="black", bg="#40C961",
-                               font="lucida 9 bold", justify="left",
-                               anchor="e")
-            m_label.grid(row=1, column=0, padx=2, pady=2, sticky="e")
-
-            i_label = tk.Label(m_frame, bg="#595656", image=self.user_image)
-            i_label.image = self.user_image
-            i_label.grid(row=0, column=1, rowspan=4, sticky="e")
-
-            m_frame.pack(pady=10, padx=10, fill="x", expand=True, anchor="e")
-
-            self.canvas.update_idletasks() # Cập nhật giao diện chat khi tin nhắn gửi lên
-            self.canvas.yview_moveto(1.0)
-
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(1.0) 
+        
+    
+    # Xử lý tải file    
+    def download_file(self, file_name, data):
+        folder_path = filedialog.askdirectory()
+        
+        if not folder_path:
+            return
+        
+        file = open(folder_path + '/' + file_name, 'wb')
+        file.write(data)
+        file.close()
+        messagebox.showinfo(title="Successful!", message='Tải file thành công')
+        
+    
     # Xử lý thông báo tham gia hay rời đi của 1 Client
     def notification_format(self, data):
         if data['n_type'] == 'joined': # Nếu có người dùng mới tham gia
@@ -571,7 +822,8 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
                 y_co -= 60
                 b.place(x=500, y=y_co)
                 self.clients_online_labels[user_id] = (b, y_co)
-
+                
+        
     # Chèn biểu cảm vào tin nhắn
     def insert_emoji(self, x):
         self.entry.insert("end-1c", x.widget['text']) # Chèn vào cuối
@@ -579,8 +831,8 @@ class ChatScreen(tk.Canvas): # Kế thừa tk.Canvas vẽ các hình ảnh, giao
     # Quay về FirstScreen khi thoát
     def first_screen(self):
         self.destroy()
-        self.parent.geometry(f"550x400+{self.parent.x_co}+{self.parent.y_co}")
-        self.parent.first_frame.pack(fill="both", expand=True)
+        self.parent.geometry('925x500+300+200')
+        self.parent.signIn_frame.place(x=480,y=70)
         self.window = None
 
-FirstScreen()
+SignIn()
